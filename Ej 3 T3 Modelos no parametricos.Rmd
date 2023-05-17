@@ -1,0 +1,127 @@
+---
+title: "Conteo de Bacterias"
+author: "Gómez Jiménez Aaron Mauricio - Francisca Fernanada Vilca Sánchez"
+date: "2023-05-09"
+output: html_document
+pdf_document: default
+---
+
+Un investigador está  interesado en determinar el log10 de conteos de microbios obtenidos de un cupó contaminado de 2.3 cm2 a diferentes temperaturas y en diferentes medios. Su hipóotesis sostiene que las variaciones de temperatura de 20.8 C a 40.8 C y la concentraciónn del medio afectarían los conteos.
+¿Puede apoyar la hipótesis con un modelo lineal? 
+
+Primero cargamos nuestros datos, renombramos variables  y hacemos un analisis exploratorio con las estadisticas mas comunes.
+
+```{r setup, include=FALSE}
+
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(lmtest)
+library(corrplot)
+library(car)
+```
+
+
+```{r, include=FALSE, message=FALSE, results=F}
+base = read_excel("C:\\Users\\maugo\\Downloads\\micro.xlsx")
+data= data.frame(base)
+datos=rename(data, observación = X.n., logconteo = X.y. , temperatura = X.x1. , medio =X.x2. , temp_med = X.x3. )
+```
+
+
+```{r}
+summary(datos)
+```
+
+Visualizando los datos y calculando la correlación entre las variables para ver si tiene sentido hacer nuestra regresión 
+
+```{r}
+cor=cor(datos[,2:5])
+cor
+```
+
+Notamos que existe una correlación alta entre el conteo de bacterias y el medio, tambien entre la temperatura*medio y el conteo de bacterias.
+
+```{r}
+plot(datos[,2:5], col=palette("ggplot2"), main="Pairs de los Datos")
+```
+
+Al graficar los datos por pares, notamos que podría existir una relación lineal entre el conteo y el medio, ya que en su grafica podemos ver una tendencia positia y lineal, lo mismo podemos concluir de el conteo y de la temperatura*medio, mas adelante analizaremos mas a fondo este caso.
+
+Haciendo una regresión para explicar si el número de bacterias depende de la temperatura 
+
+```{r}
+reg1=lm(logconteo ~ temperatura, data=datos)
+summary(reg1)
+```
+
+Al analizar la variable explicativa queremos saber si es significativa, como  obtenemos un p-value 0.443 usando una significancía de 0.05, concluimos que no se rechaza la hipotesis nula, es decir podría ser $B_0=0$, ademas de una R cuadrada muy baja de 0.04601, es decir con nuestra regresión se explican solo el 4% de los datos.
+
+
+```{r}
+scatter_line = ggplot(datos, aes(x = temperatura, y = logconteo)) + geom_point(color = "blue", size = 1)
+scatter_line + geom_line(aes(x = temperatura, y = reg1$fitted.values, color = "red"))
+```
+
+Ahora haciendo la regresión para el conteo y el medio 
+
+```{r}
+reg2=lm(logconteo~medio, data=datos)
+summary(reg2)
+```
+
+En esta regresión podemos observar que la variable explicativa medio es significativa con el alfa usual, y ademas obetenemos una R cuadrada  muy buena de 0.8464, por lo cual podemos asegurar que *existe una relación lineal positiva*.
+
+
+```{r}
+scatter_line = ggplot(datos, aes(x = medio, y = logconteo)) + geom_point(color = "brown", size = 1)
+scatter_line + geom_line(aes(x = medio, y = reg2$fitted.values, color = "red"))
+```
+
+Ahora para explicar el conteo con la multiplicación de la temperatura y el medio
+
+```{r}
+reg3=lm(logconteo~ temp_med, data=datos)
+summary(reg3)
+```
+
+Observamos que la combinación lineal de las variables explicativas es significante, ademas que nos da una R cuadrada de .83 es decir se explican el 83% de los datos. Por lo tanto para nuestro siguiente modelo incluiremos el medio y la temp*medio.
+
+
+```{r}
+scatter_line = ggplot(datos, aes(x = temp_med, y = logconteo)) + geom_point(color = "green", size = 1)
+scatter_line + geom_line(aes(x = temp_med, y = reg3$fitted.values, color = "red"))
+```
+
+
+```{r}
+reg4=lm(logconteo~ medio+ temp_med, data=datos)
+summary(reg4)
+```
+
+Calculando el coeficiente de Akaike
+
+```{r}
+vif(reg4)
+```
+
+Es importante notar que existe multicolinealidad ya que, al analizar las pruebas t de las variables explicativas vemos que no son significativas pero al revisar la prueba F en conjunto vemos que se rechaza $H_0=0$, es decir las betas no son cero en conjunto, y como tenemos una R cuadrada elevada podemos concluir que existe multicolinealidad, ademas de que el coeficiente de Akaike tambien es mayor a 5 y cercano a 10. Es algo que esperabamos que ya la variable temp_med es una combinación lineal de temperatura y medio, por lo tanto tenemos que variable dejaremos si la combinación lineal o las variables por sí solas.
+
+Comparando la R cuadrada de las regresiones las varaibles medio y temp_med respectivamente obtenemos 0.8464  y 0.8344, es decir muy similares, por lo tanto como sabemos que temp_med es una combinación lineal de medio, nos podemos quedar solo con alguna de estas dos variables, como la prueba de hipoetsis es que la temepratura y el medio afectan el conteo de las bacterias hacemos la regresión.
+
+
+
+```{r}
+reg6=lm(logconteo~temperatura+medio, data=datos)
+summary(reg6)
+```
+Viendo el intervalo de confinaza para los estimadores
+
+```{r}
+conf=confint(reg6, level=.95)
+conf
+```
+
+
+
+
