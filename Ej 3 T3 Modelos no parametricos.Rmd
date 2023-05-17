@@ -122,6 +122,9 @@ conf=confint(reg6, level=.95)
 conf
 ```
 
+```{r}
+plot(reg1)
+```
 
 
 
