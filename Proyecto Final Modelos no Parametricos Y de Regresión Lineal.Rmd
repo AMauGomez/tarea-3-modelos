@@ -14,7 +14,8 @@ library(dplyr)
 library(ggplot2)
 library(lmtest)
 library(corrplot)
-library(car)
+library(tidyverse)
+
 ```
 
 Primero cargamos los adatos y al observar que existe un dato faltante decidimos quitarlo ya que al tener una base de 158 datos, consideramos que que nuestra base sigue siendo grande y buena para trabajar.
@@ -40,5 +41,38 @@ summary(reg1)
 
 ```{r}
 pairs(datos1)
+datos1 |>
+  GGally::ggpairs()
+```
+
+```{r}
+modelo_full <- lm(razon_ad.lep ~ ., datos)
+
+modelo_nulo <- lm(razon_ad.lep ~ 1, datos1)
+summary(modelo_nulo)
+
+# Paso 1
+
+tabla1_add1 <- add1(
+  modelo_nulo, 
+  test  = "F",
+  scope = formula(modelo_full)
+)
+
+modelo_add1 <- lm(
+  razon_ad.lep ~ escol_madre, 
+  datos
+)
+summary(modelo_add1)
+
+# Paso 2
+
+tabla2_add1 <- add1(
+  modelo_add1, 
+  test  = "F",
+  scope = formula(modelo_full)
+)
+
+# ya no hay variables significativas
 ```
 
