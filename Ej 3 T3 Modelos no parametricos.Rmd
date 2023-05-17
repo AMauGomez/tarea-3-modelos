@@ -6,10 +6,10 @@ output: html_document
 pdf_document: default
 ---
 
-Un investigador está  interesado en determinar el log10 de conteos de microbios obtenidos de un cupó contaminado de 2.3 cm2 a diferentes temperaturas y en diferentes medios. Su hipóotesis sostiene que las variaciones de temperatura de 20.8 C a 40.8 C y la concentraciónn del medio afectarían los conteos.
+Un investigador está interesado en determinar el $log_{10}$ de conteos de microbios obtenidos de un cupó contaminado de $2.3$ $cm^2$ a diferentes temperaturas y en diferentes medios. La hipótesis sostiene que las variaciones de temperatura de $20.8$ $ºC$ a $40.8$ $ºC$ y la concentración del medio afectarían los conteos.
 ¿Puede apoyar la hipótesis con un modelo lineal? 
 
-Primero cargamos nuestros datos, renombramos variables  y hacemos un analisis exploratorio con las estadisticas mas comunes.
+Lo primero hacer es cargar los datos, renombrar las variables y se realiza un análisis exploratorio con las estadísticas más comunes.
 
 ```{r setup, include=FALSE}
 
@@ -19,11 +19,12 @@ library(ggplot2)
 library(lmtest)
 library(corrplot)
 library(car)
+library(rio)
 ```
 
 
 ```{r, include=FALSE, message=FALSE, results=F}
-base = read_excel("C:\\Users\\maugo\\Downloads\\micro.xlsx")
+base = import("micro.txt")
 data= data.frame(base)
 datos=rename(data, observación = X.n., logconteo = X.y. , temperatura = X.x1. , medio =X.x2. , temp_med = X.x3. )
 ```
@@ -33,20 +34,20 @@ datos=rename(data, observación = X.n., logconteo = X.y. , temperatura = X.x1. ,
 summary(datos)
 ```
 
-Visualizando los datos y calculando la correlación entre las variables para ver si tiene sentido hacer nuestra regresión 
+Visualizando los datos y calculando la correlación entre las variables, se puede ver si tiene sentido hacer la regresión 
 
-```{r}
+```{r echo=FALSE}
 cor=cor(datos[,2:5])
 cor
 ```
 
-Notamos que existe una correlación alta entre el conteo de bacterias y el medio, tambien entre la temperatura*medio y el conteo de bacterias.
+Notamos que existe una correlación alta entre el `conteo de bacterias` y el `medio`, también entre la `temperatura*medio` y el `conteo de bacterias`.
 
 ```{r}
 plot(datos[,2:5], col=palette("ggplot2"), main="Pairs de los Datos")
 ```
 
-Al graficar los datos por pares, notamos que podría existir una relación lineal entre el conteo y el medio, ya que en su grafica podemos ver una tendencia positia y lineal, lo mismo podemos concluir de el conteo y de la temperatura*medio, mas adelante analizaremos mas a fondo este caso.
+Al graficar los datos por pares, notamos que podría existir una relación lineal entre el `conteo` y el `medio`, puesto que, en su gráfica podemos ver una tendencia positia y lineal, lo mismo podemos concluir de el `conteo` y de la `temperatura*medio`, más adelante se analizará más a fondo este caso.
 
 Haciendo una regresión para explicar si el número de bacterias depende de la temperatura 
 
