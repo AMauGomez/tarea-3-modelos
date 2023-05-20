@@ -12,7 +12,6 @@ Un investigador está interesado en determinar el $log_{10}$ de conteos de micro
 Lo primero hacer es cargar los datos, renombrar las variables y se realiza un análisis exploratorio con las estadísticas más comunes.
 
 ```{r setup, include=FALSE}
-
 library(readxl)
 library(dplyr)
 library(ggplot2)
@@ -20,6 +19,7 @@ library(lmtest)
 library(corrplot)
 library(car)
 library(rio)
+library(olsrr)
 ```
 
 
@@ -100,13 +100,13 @@ reg4=lm(logconteo~ medio+ temp_med, data=datos)
 summary(reg4)
 ```
 
-Calculando el coeficiente de Akaike
+Calculando el factor de inflación de la varianza
 
 ```{r}
 vif(reg4)
 ```
 
-Es importante notar que existe multicolinealidad ya que, al analizar las pruebas t de las variables explicativas vemos que no son significativas pero al revisar la prueba F en conjunto vemos que se rechaza $H_0=0$, es decir las betas no son cero en conjunto, y como tenemos una R cuadrada elevada podemos concluir que existe multicolinealidad, ademas de que el coeficiente de Akaike tambien es mayor a 5 y cercano a 10. Es algo que esperabamos que ya la variable temp_med es una combinación lineal de temperatura y medio, por lo tanto tenemos que variable dejaremos si la combinación lineal o las variables por sí solas.
+Es importante notar que existe multicolinealidad ya que, al analizar las pruebas t de las variables explicativas vemos que no son significativas pero al revisar la prueba F en conjunto vemos que se rechaza $H_0=0$, es decir las betas no son cero en conjunto, y como tenemos una R cuadrada elevada podemos concluir que existe multicolinealidad, ademas de que el factor de inflación de la varianza tambien es mayor a 5 y cercano a 10. Es algo que esperabamos que ya la variable temp_med es una combinación lineal de temperatura y medio, por lo tanto tenemos que variable dejaremos si la combinación lineal o las variables por sí solas.
 
 Comparando la R cuadrada de las regresiones las varaibles medio y temp_med respectivamente obtenemos 0.8464  y 0.8344, es decir muy similares, por lo tanto como sabemos que temp_med es una combinación lineal de medio, nos podemos quedar solo con alguna de estas dos variables, como la prueba de hipoetsis es que la temepratura y el medio afectan el conteo de las bacterias hacemos la regresión.
 
@@ -116,12 +116,91 @@ Comparando la R cuadrada de las regresiones las varaibles medio y temp_med respe
 reg6=lm(logconteo~temperatura+medio, data=datos)
 summary(reg6)
 ```
-Viendo el intervalo de confinaza para los estimadores
+Como podemos observar la temperatura sigue siendo no significativa, ademas observamos que el intercepto tampoco es significativo ademas de que es cercano a $0$, pero se rechaza $H_0=0$ para la prueba conjunta F.
+
+Viendo el intervalo de confinaza para los estimadores para ver si es viable eliminar el intercepto
 
 ```{r}
-conf=confint(reg6, level=.95)
+conf=confint(reg6, level=.90)
 conf
 ```
+
+Notamos que en efecto, el intercepto se encuentra cerca del $0$ y al ser no significativo decidimos retirarlo de la regresión.
+
+```{r}
+reg7=lm(logconteo~temperatura+medio-1, data=datos)
+summary(reg7)
+```
+
+Notamos que tenemos una R cuadrada muy cercana a 1, por lo tanto nos quedaremos con este modelo, pero rechazamos la hipotesis que se plantea al inicio ya que como vimos la temperatura no es significativa, solo el medio es significativo en la regresión.
+
+**Verificación de Supuestos**
+
+**Autocorrelación**
+
+Primero haremos una prueba de hipotesis Durbin-Watson 
+
+```{r}
+dwtest(reg7)
+```
+
+Observamos que el valor DW es cercano a 2, con una varinaza significativa pero todavía aceptable como que no hay autocorrelación, haremos una correlograma para ver graficamente si es que no existe correlación.
+
+```{r}
+acf(reg7$residuals, main="Supuesto de covarianza de residuales igual a cero")
+```
+
+Se cumple el supuesto de que no existe autocorrelación.
+
+**Esperanza de los residuales igual a cero**
+
+```{r}
+bgtest(reg7)
+```
+ Por lo tanto no se rchaza la hipotesis nula, es decir la esperanza de los residuales es cero con un 95% de efectividad.
+ 
+**Homocedasticidad**
+
+```{r}
+bptest(reg7)
+```
+Por lo tanto no se rechaza la hipotesis nula, es decir la varianza de los errores es constante.
+
+**Normalidad de los residuales**
+
+Haremos una prueba Shapiro-Wilks y un qq-plt para la prueba gráfica
+
+```{r}
+shapiro.test(reg7$residuals)
+```
+
+No se rechaza $H_0$= Se distribuye normal, es decir se acepta la hipotesis nula.
+
+Haciendo un qq-plot 
+
+```{r}
+qqnorm(reg7$residuals)
+qqline(reg7$residuals, col ="blue")
+```
+
+Notamo que existen 3 datos que no se ajustan bien a la recta, que probablemente sean outliers, asi que haremos una gráfica con la distancia de Cooks para identificar outliers
+
+```{r}
+ols_plot_cooksd_bar(reg7)
+```
+
+
+Observamos que solo tenemos un outlier en la observación número 9, donde la variable temperatura alcanza su máximo con 45 grados, ya que al tener un modelo bueno dada la R cuadrada obtenida, decidimos dejar el outlier ya que no nos generó problemas al modelar.
+
+
+```{r}
+summary(reg7)
+```
+
+**Conclusiones**
+
+Podemos concluir que la hipotesis planteada de que la temperatura y el medio afectan el conteo de bacterias no es del todo cierto, ya que al hacer la regresión vimos que la variable temperatura no era significante, pero al final decidimos dejarla ya que el proposito era ver si se cumplia la hipotesis, teniendo como resultado que el medio es la variable mas influyente en la regresión y dado el intercepto estimado es mejor quitarlo ya que podemos aumentar el valor de la R cuadrada.
+Se concluye que existe una relación lineal positiva entre las variables medio y temperatura, siendo el medio es mas influyente ya que por cada unidad que aumenta en el medio, el conteo de bacterias aumenta 1.23 veces.
 
 
 

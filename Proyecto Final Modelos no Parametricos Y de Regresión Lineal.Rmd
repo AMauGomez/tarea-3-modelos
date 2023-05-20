@@ -8,14 +8,10 @@ pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
-
 library(readxl)
 library(dplyr)
-library(ggplot2)
 library(lmtest)
 library(corrplot)
-library(tidyverse)
-
 ```
 
 Primero cargamos los adatos y al observar que existe un dato faltante decidimos quitarlo ya que al tener una base de 158 datos, consideramos que que nuestra base sigue siendo grande y buena para trabajar.
