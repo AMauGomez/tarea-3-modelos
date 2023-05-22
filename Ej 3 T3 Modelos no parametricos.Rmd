@@ -2,7 +2,7 @@
 title: "Conteo de Bacterias"
 author: "Gómez Jiménez Aaron Mauricio - Francisca Fernanada Vilca Sánchez"
 date: "2023-05-09"
-output: html_document
+output: pdf_document
 pdf_document: default
 ---
 
